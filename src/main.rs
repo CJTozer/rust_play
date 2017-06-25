@@ -49,20 +49,35 @@ struct WatchHandler<'a> {
     _watcher: Box<Watcher + 'a>,
 }
 
+enum WatcherType {
+    Dummy,
+}
+
 impl <'a> WatchHandler<'a> {
     // Factory is probably better.
-    fn new() -> WatchHandler<'a> {
+    fn new(watcher_type: WatcherType) -> WatchHandler<'a> {
         let (tx, rx): (Sender<HeartbeatStatus>, Receiver<HeartbeatStatus>) = mpsc::channel();
         WatchHandler {
             _ok: true,
             // Just building a DummyWatcher for now.
-            _watcher: Box::new(DummyWatcher::new(tx)),
+            _watcher: match watcher_type {
+                DummyWatcher => Box::new(DummyWatcher::new(tx)),
+            },
             _heartbeat_rx: rx,
         }
+    }
+
+    // @@@ TODO - start the watcher, thread to listen on the rx for heartbeats, running a timer to
+    // set _ok to false if no HB.  _ok needs to be thread-safe.
+
+    // Is the watcher OK?
+    fn ok(&self) -> bool {
+        self._ok
     }
 }
 
 fn main() {
     // Create a WatchHandler
-    let w = WatchHandler::new();
+    let w = WatchHandler::new(WatcherType::Dummy);
+    assert!(w.ok());
 }
