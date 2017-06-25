@@ -4,3 +4,5 @@ version = "0.1.0"
 authors = ["Chris Tozer <christopherjtozer@gmail.com>"]
 
 [dependencies]
+timer = "0.1.6"
+chrono = "^0.2"

@@ -2,6 +2,9 @@
 use std::sync::mpsc::{Sender, Receiver};
 use std::sync::mpsc;
 
+extern crate timer;
+extern crate chrono;
+
 // Main thread spawns a set of WatchHandler objects
 // Each one of these has one watcher to look after
 // Watcher is started, given a channel to send regular heartbeats on
@@ -9,8 +12,8 @@ use std::sync::mpsc;
 // Main thread regularly checks each WatchHandler is OK
 
 enum HeartbeatStatus {
-    HeartbeatOK,
-    HeartbeatFailed,
+    OK,
+    Failed,
 }
 
 trait Watcher {
@@ -30,7 +33,14 @@ impl Watcher for DummyWatcher {
         }
     }
 
-    fn start(&self) {}
+    fn start(&self) {
+        // Ping the heartbeat connection every second.
+        let timer = timer::Timer::new();
+        let tx = self._heartbeat_tx.clone();
+        timer.schedule_repeating(chrono::Duration::seconds(1), move || {
+            tx.send(HeartbeatStatus::OK).unwrap();
+        });
+    }
 }
 
 struct WatchHandler<'a> {
@@ -53,4 +63,6 @@ impl <'a> WatchHandler<'a> {
 }
 
 fn main() {
+    // Create a WatchHandler
+    let w = WatchHandler::new();
 }
